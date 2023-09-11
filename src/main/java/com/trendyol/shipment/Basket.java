@@ -1,44 +1,53 @@
 package com.trendyol.shipment;
 
+import java.util.EnumMap;
 import java.util.List;
 
 import static com.trendyol.shipment.ShipmentSize.*;
 
 public class Basket {
 
+    private static final int BASKET_THRESHOLD_VALUE = 3;
     private List<Product> products;
-
-    private static final int basketThresholdValue = 3;
 
     public ShipmentSize getShipmentSize() {
 
-        if (hasContainsXlarge(products)) {
-            return ShipmentSize.X_LARGE;
+        EnumMap<ShipmentSize, Integer> productsMap = getProductsMap(products);
+
+        if (hasContainsXlargeMoreThanThreshold(productsMap)) {
+            return X_LARGE;
         }
 
-        if (allProductsSameSize(products)) {
-            return increaseSize(products.get(0).getSize());
-        }
-
-        if (products.size() < basketThresholdValue) {
-            return getLargestSize(products);
+        for (ShipmentSize key : productsMap.keySet()) {
+            if (productsMap.get(key) >= BASKET_THRESHOLD_VALUE) {
+                return key.getNext();
+            }
         }
 
         return getLargestSize(products);
 
     }
 
-    private boolean allProductsSameSize(List<Product> products) {
-        ShipmentSize firstSize = products.get(0).getSize();
-        for (Product product : products) {
-            if (product.getSize().equals(firstSize)) {
-                return true;
-            }
-        }
-        return false;
+    private boolean hasContainsXlargeMoreThanThreshold(EnumMap<ShipmentSize, Integer> productsMap) {
+        return productsMap.containsKey(X_LARGE) && productsMap.get(X_LARGE) >= BASKET_THRESHOLD_VALUE;
     }
 
-    private static ShipmentSize getLargestSize(List<Product> products) {
+    private EnumMap<ShipmentSize, Integer> getProductsMap(List<Product> products) {
+        EnumMap<ShipmentSize, Integer> productsMap = new EnumMap<>(ShipmentSize.class);
+
+        for (Product product : products) {
+            ShipmentSize shipmentSize = product.getSize();
+            if (productsMap.containsKey(shipmentSize)) {
+                productsMap.put(shipmentSize, productsMap.get(shipmentSize) + 1);
+            } else {
+                productsMap.put(shipmentSize, 1);
+            }
+        }
+
+        return productsMap;
+    }
+
+    private ShipmentSize getLargestSize(List<Product> products) {
         ShipmentSize largestSize = ShipmentSize.SMALL;
         for (Product product : products) {
             if (product.getSize().equals(MEDIUM)) {
@@ -49,28 +58,6 @@ public class Basket {
             }
         }
         return largestSize;
-    }
-
-    private boolean hasContainsXlarge(List<Product> products) {
-
-        for (Product product : products) {
-            if (product.getSize().equals(ShipmentSize.X_LARGE)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static ShipmentSize increaseSize(ShipmentSize size) {
-        if (size.equals(SMALL)) {
-            return ShipmentSize.MEDIUM;
-        } else if (size == ShipmentSize.MEDIUM) {
-            return ShipmentSize.LARGE;
-        } else if (size == ShipmentSize.LARGE) {
-            return ShipmentSize.X_LARGE;
-        } else {
-            return ShipmentSize.X_LARGE;
-        }
     }
 
     public List<Product> getProducts() {
