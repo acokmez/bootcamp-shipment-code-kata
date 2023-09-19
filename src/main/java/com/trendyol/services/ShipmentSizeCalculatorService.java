@@ -5,19 +5,20 @@ import com.trendyol.shipment.ShipmentSize;
 
 import java.util.EnumMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.trendyol.shipment.ShipmentSize.LARGE;
 import static com.trendyol.shipment.ShipmentSize.MEDIUM;
 
-public class ShipmentService {
+public class ShipmentSizeCalculatorService {
 
     private static final int BASKET_THRESHOLD_VALUE = 3;
 
-    public ShipmentService() {
+    public ShipmentSizeCalculatorService() {
         // intentionally empty
     }
 
-    public ShipmentSize decideShipmentSize(List<Product> products) {
+    public ShipmentSize calculate(List<Product> products) {
         EnumMap<ShipmentSize, Integer> shipmentSizeMap = createShipmentSizeMap(products);
 
         for (ShipmentSize key : shipmentSizeMap.keySet()) {
@@ -47,16 +48,10 @@ public class ShipmentService {
     }
 
     private EnumMap<ShipmentSize, Integer> createShipmentSizeMap(List<Product> products) {
-        EnumMap<ShipmentSize, Integer> shipmentSizeMap = new EnumMap<>(ShipmentSize.class);
 
-        for (Product product : products) {
-            ShipmentSize shipmentSize = product.getSize();
-            if (shipmentSizeMap.containsKey(shipmentSize)) {
-                shipmentSizeMap.put(shipmentSize, shipmentSizeMap.get(shipmentSize) + 1);
-            } else {
-                shipmentSizeMap.put(shipmentSize, 1);
-            }
-        }
-        return shipmentSizeMap;
+        return products.stream()
+                .collect(Collectors.groupingBy(Product::getSize,
+                        () -> new EnumMap<>(ShipmentSize.class),
+                        Collectors.summingInt(product -> 1)));
     }
 }
