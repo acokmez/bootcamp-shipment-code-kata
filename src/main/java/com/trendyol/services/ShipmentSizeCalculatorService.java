@@ -3,12 +3,11 @@ package com.trendyol.services;
 import com.trendyol.shipment.Product;
 import com.trendyol.shipment.ShipmentSize;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.trendyol.shipment.ShipmentSize.LARGE;
-import static com.trendyol.shipment.ShipmentSize.MEDIUM;
 
 public class ShipmentSizeCalculatorService {
 
@@ -35,20 +34,14 @@ public class ShipmentSizeCalculatorService {
     }
 
     private ShipmentSize findLargestSize(EnumMap<ShipmentSize, Integer> shipmentSizeMap) {
-        ShipmentSize largestSize = ShipmentSize.SMALL;
-        for (ShipmentSize shipmentSize : shipmentSizeMap.keySet()) {
-            if (shipmentSize.equals(MEDIUM)) {
-                largestSize = MEDIUM;
-            }
-            if (shipmentSize.equals(LARGE)) {
-                largestSize = LARGE;
-            }
-        }
-        return largestSize;
+        return shipmentSizeMap.entrySet().stream()
+                .filter(entry -> entry.getValue() > 0)
+                .map(Map.Entry::getKey)
+                .max(Comparator.naturalOrder())
+                .orElse(ShipmentSize.SMALL);
     }
 
     private EnumMap<ShipmentSize, Integer> createShipmentSizeMap(List<Product> products) {
-
         return products.stream()
                 .collect(Collectors.groupingBy(Product::getSize,
                         () -> new EnumMap<>(ShipmentSize.class),
