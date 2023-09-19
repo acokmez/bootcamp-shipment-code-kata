@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class ShipmentSizeCalculatorService {
 
-    private static final int BASKET_THRESHOLD_VALUE = 3;
+    private static final int BASKET_PRODUCT_THRESHOLD_VALUE = 3;
 
     public ShipmentSizeCalculatorService() {
         // intentionally empty
@@ -20,17 +20,15 @@ public class ShipmentSizeCalculatorService {
     public ShipmentSize calculate(List<Product> products) {
         EnumMap<ShipmentSize, Integer> shipmentSizeMap = createShipmentSizeMap(products);
 
-        for (ShipmentSize key : shipmentSizeMap.keySet()) {
-            if (isAboveOrEqualsThreshold(shipmentSizeMap, key)) {
-                return key.getNext();
-            }
-        }
-
-        return findLargestSize(shipmentSizeMap);
+        return shipmentSizeMap.keySet().stream()
+                .filter(key -> isAboveOrEqualsThreshold(shipmentSizeMap, key))
+                .findFirst()
+                .map(ShipmentSize::getNext)
+                .orElseGet(() -> findLargestSize(shipmentSizeMap));
     }
 
     private boolean isAboveOrEqualsThreshold(EnumMap<ShipmentSize, Integer> shipmentSizeMap, ShipmentSize key) {
-        return shipmentSizeMap.containsKey(key) && shipmentSizeMap.get(key) >= BASKET_THRESHOLD_VALUE;
+        return shipmentSizeMap.containsKey(key) && shipmentSizeMap.get(key) >= BASKET_PRODUCT_THRESHOLD_VALUE;
     }
 
     private ShipmentSize findLargestSize(EnumMap<ShipmentSize, Integer> shipmentSizeMap) {
